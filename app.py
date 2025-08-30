@@ -27,10 +27,6 @@ async def _force_utf8_json(request, call_next):
         resp.headers["content-type"] = "application/json; charset=utf-8"
     return resp
 
-# ===（可选）配置你们公司内网大模型 API 地址和密钥（没有就先空着，会自动降级）===
-INTERNAL_LLM_URL   = os.getenv("INTERNAL_LLM_URL", "")   # 例: http://llm-internal/api/chat/completions
-INTERNAL_LLM_TOKEN = os.getenv("INTERNAL_LLM_TOKEN", "") # 例: xxx
-
 class AskReq(BaseModel):
     question: str
     topk: int = 4
@@ -47,7 +43,7 @@ def build_prompt(question: str, hits: list[dict]) -> str:
             snippet = snippet[:400] + "…"
         refs.append(f"[{i}] {h['source']}#段{h['idx']}: {snippet}")
     context = "\n".join(refs)
-    prompt = f"""你是京东PLUS生活服务包客服助手。请仅依据【证据区】回答，禁止编造未在证据中的信息。
+    prompt = f"""你是PLUS生活服务包客服助手。请仅依据【证据区】回答，禁止编造未在证据中的信息。
 - 先给结论（1-3条要点，简洁），再给依据编号（如 [1][3]）
 - 术语统一：运费券=免费寄件；开通=开卡；续约=续费
 - 若证据不足或冲突，请输出：“需要人工复核：原因…”，不要给武断结论
@@ -293,4 +289,5 @@ def ask_debug(req: AskReq):
                 "text": (h["text"][:300] + "…") if len(h["text"]) > 300 else h["text"]
             } for i, h in enumerate(hits)
         ]
+
     }, media_type="application/json; charset=utf-8")
