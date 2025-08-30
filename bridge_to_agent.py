@@ -15,8 +15,8 @@ from fastapi import Header
 # 【重点】你的本地 RAG 服务地址
 # - 如果只在本机自测，可改回: http://127.0.0.1:8000/ask_debug
 # - 如果要让“同一局域网里”的同事访问到你的Bridge，并让Bridge去请求你这台机的RAG，
-#   就要写成你的电脑的局域网IP（你说是 192.168.1.3）
-LOCAL_RAG_URL = os.getenv("LOCAL_RAG_URL", "http://192.168.1.3:8000/ask_debug")
+#   就要写成你的电脑的局域网IP
+LOCAL_RAG_URL = os.getenv("LOCAL_RAG_URL", "http://127.0.0.1:8000/ask_debug")
 
 # Coze API 配置（务必先在环境变量里配置你自己的 Token 与 BotID）
 # 国内站： https://api.coze.cn/open_api/v2
@@ -334,7 +334,7 @@ def diag():
 
 @app.post("/debug/coze-raw")
 def debug_coze_raw(req: BridgeReq):
-    # 走完整链路，但把 coze 的原始 data & raw 文本返回，方便你核对字段
+    # 走完整链路，但把 coze 的原始 data & raw 文本返回，方便核对字段
     rag = call_local_rag(req.question, topk=req.topk)
     hits = rag.get("results") or rag.get("hits") or rag.get("citations") or []
     context = build_context_from_hits(hits, max_refs=3)
@@ -351,4 +351,5 @@ def debug_coze_raw(req: BridgeReq):
 # 直接作为脚本跑一把（可选）
 if __name__ == "__main__":
     demo = ask_pipeline("为什么积分只有9分", topk=3, mode="check")
+
     print(json.dumps(demo, ensure_ascii=False, indent=2))
