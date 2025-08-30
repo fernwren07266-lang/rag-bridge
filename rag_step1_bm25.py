@@ -16,7 +16,8 @@ if USE_SEMANTIC:
 else:
     _sem = None
 
-KB_DIR = r"./kb"
+# KB 目录：从环境变量读取，默认 ./kb
+KB_DIR = os.getenv("KB_DIR", "./kb")
 
 # 每块目标字数/重叠字数（保持你的习惯）
 CHUNK_SIZE = 500
@@ -435,3 +436,4 @@ if __name__ == "__main__":
             f.write("\n")
 
     print(f"已导出命中结果到：{out_path}")
+
