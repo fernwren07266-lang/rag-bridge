@@ -106,6 +106,7 @@ POST https://你的域名.ngrok-free.app/bridge/ask-and-wait
 
 ```bash
 cp .env.example .env
+```
 
 ---
 
