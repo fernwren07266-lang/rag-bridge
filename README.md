@@ -26,6 +26,16 @@
 
 ---
 
+## ⚙️ 配置环境变量
+
+请先复制示例文件并修改：
+
+```bash
+cp .env.example .env
+```
+
+---
+
 ## 🚀 本地运行
 > 需 Python 3.10+，建议用虚拟环境
 
@@ -96,16 +106,6 @@ POST https://你的域名.ngrok-free.app/bridge/ask-and-wait
   "answerfinal": "（最终答案纯文本）",
   "hitscontext": "（命中证据纯文本，可展示给坐席）"
 }
-```
-
----
-
-## ⚙️ 配置环境变量
-
-请先复制示例文件并修改：
-
-```bash
-cp .env.example .env
 ```
 
 ---
