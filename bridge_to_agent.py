@@ -14,8 +14,7 @@ from fastapi import Header
 # ===================== 配置区 =====================
 # 【重点】你的本地 RAG 服务地址
 # - 如果只在本机自测，可改回: http://127.0.0.1:8000/ask_debug
-# - 如果要让“同一局域网里”的同事访问到你的Bridge，并让Bridge去请求你这台机的RAG，
-#   就要写成你的电脑的局域网IP
+# - 如果要让“同一局域网里”的同事访问到你的Bridge，并让Bridge去请求你这台机的RAG，就要写成你的电脑的局域网IP
 LOCAL_RAG_URL = os.getenv("LOCAL_RAG_URL", "http://127.0.0.1:8000/ask_debug")
 
 # Coze API 配置（务必先在环境变量里配置你自己的 Token 与 BotID）
@@ -308,18 +307,33 @@ def bridge_ask_and_wait(req: BridgeReq, x_bridge_secret: str | None = Header(Non
     final = (coze.get("final") or "").strip() or "（抱歉，未拿到答案）"
     return PlainTextResponse(final)   # 直接返回纯文本
 
-# 调试口：只看 RAG 命中与证据（不走 Coze），便于你调 bm25 参数与词典
+from fastapi import Request
+
+def _check_secret(req: Request) -> bool:
+    secret = os.getenv("BRIDGE_SECRET", "")
+    if not secret:
+        return True  # 未设置则不校验（本地开发用），线上务必设置
+    return req.headers.get("X-Bridge-Secret") == secret
+
 @app.post("/debug/rag-only")
-def debug_rag_only(req: BridgeReq):
+async def debug_rag_only(req: BridgeReq, request: Request):
+    if not _check_secret(request):
+        return PlainTextResponse("Unauthorized", status_code=401)
     rag = call_local_rag(req.question, topk=req.topk)
     hits = rag.get("results") or rag.get("hits") or rag.get("citations") or []
     context = build_context_from_hits(hits, max_refs=4, max_each=200)
-    return {
-        "question": req.question,
-        "hits_count": len(hits),
-        "context": context,
-        "raw_hits": hits[:4],
-    }
+    return {"question": req.question, "hits_count": len(hits), "context": context, "raw_hits": hits[:4]}
+
+@app.post("/debug/coze-raw")
+async def debug_coze_raw(req: BridgeReq, request: Request):
+    if not _check_secret(request):
+        return PlainTextResponse("Unauthorized", status_code=401)
+    rag = call_local_rag(req.question, topk=req.topk)
+    hits = rag.get("results") or rag.get("hits") or rag.get("citations") or []
+    context = build_context_from_hits(hits, max_refs=3)
+    coze = call_coze_chat(req.question, context)
+    return {"question": req.question, "context": context, "status": coze.get("status"),
+            "final_picked": coze.get("final"), "data": coze.get("data"), "raw": coze.get("raw")}
 
 # 诊断信息
 @app.get("/diag")
@@ -332,24 +346,9 @@ def diag():
         "time": int(time.time())
     }
 
-@app.post("/debug/coze-raw")
-def debug_coze_raw(req: BridgeReq):
-    # 走完整链路，但把 coze 的原始 data & raw 文本返回，方便核对字段
-    rag = call_local_rag(req.question, topk=req.topk)
-    hits = rag.get("results") or rag.get("hits") or rag.get("citations") or []
-    context = build_context_from_hits(hits, max_refs=3)
-    coze = call_coze_chat(req.question, context)
-    return {
-        "question": req.question,
-        "context": context,
-        "status": coze.get("status"),
-        "final_picked": coze.get("final"),
-        "data": coze.get("data"),   # Coze 的 JSON（可能很长）
-        "raw": coze.get("raw"),     # Coze 的原始文本
-    }
-
 # 直接作为脚本跑一把（可选）
 if __name__ == "__main__":
     demo = ask_pipeline("为什么积分只有9分", topk=3, mode="check")
 
     print(json.dumps(demo, ensure_ascii=False, indent=2))
+
