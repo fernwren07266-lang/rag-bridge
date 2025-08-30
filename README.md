@@ -100,7 +100,7 @@ POST https://你的域名.ngrok-free.app/bridge/ask-and-wait
 
 ---
 
-### 配置环境变量
+## ⚙️ 配置环境变量
 
 请先复制示例文件并修改：
 
