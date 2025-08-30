@@ -79,14 +79,6 @@ def call_llm_or_rule(prompt: str, hits: list[dict]) -> str:
     if len(first) > 220: first = first[:220] + "…"
     return f"结论：请参考规则片段[1]。\n依据：[1] {first}"
 
-def calc_confidence(hits: list[dict]) -> float:
-    """简单置信度：Top1分 + 与Top2差值。后续你可以再调。"""
-    if not hits: return 0.0
-    s1 = hits[0]["score"]
-    s2 = hits[1]["score"] if len(hits) > 1 else 0.0
-    conf = min(0.95, 0.55 + 0.05*s1 + 0.15*max(0, s1 - s2))
-    return round(conf, 2)
-
 @app.get("/whoami")
 def whoami():
     import os
@@ -108,8 +100,6 @@ def reload_kb():
     global retriever
     retriever = get_retriever()
     return {"ok": True, "chunks": len(retriever.chunks)}
-
-import time
 
 # ① 把命中片段拼成“证据区”+简单回答（先结论后依据）
 def build_simple_answer(question: str, hits: list[dict]) -> tuple[str, list[dict]]:
@@ -291,3 +281,4 @@ def ask_debug(req: AskReq):
         ]
 
     }, media_type="application/json; charset=utf-8")
+
