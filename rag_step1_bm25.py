@@ -16,7 +16,7 @@ if USE_SEMANTIC:
 else:
     _sem = None
 
-KB_DIR = r"D:\Program Files\PythonProjects\PythonProject\kb"
+KB_DIR = r"./kb"
 
 # 每块目标字数/重叠字数（保持你的习惯）
 CHUNK_SIZE = 500
@@ -433,4 +433,5 @@ if __name__ == "__main__":
                 f.write(f"[Top{i}] 来源：{h['source']}#段{h['idx']} | 分数={h['score']}\n")
                 f.write(text_full + "\n" + "=" * 80 + "\n")
             f.write("\n")
+
     print(f"已导出命中结果到：{out_path}")
